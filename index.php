@@ -19,26 +19,66 @@
 </div>
 
 <i>Source code can be found on <a href="https://github.com/sharmalakshay">my github</a></i>
-<br><br><br>
+
+<br><hr><br>
+
+<form method="post" action="">
+From: <input type="text" name="from"/> (Bus station number)
+<br><br>
+Route: <input type="text" name="route"/>
+<br><br>
+<input type="submit" name="submit" value="show me the right bus"/>
+</form>
+
+<br><hr><br>
 
 <form action="" method="POST">
 Current location: <input type="text" name="location"/> (GPS coordinates)
-<input type="submit" name="submit1" value="Show the bus stations near me"/>
+<input type="submit" name="submit2" value="Show the bus stations near me"/>
 </form>
 
-<br><br>
+<br><hr><br>
 
 <form action="" method="POST">
 FROM: <input type="text" name="from"/>
-TO: <input type="text" name="to"/>
-<input type="submit" value="Tell me how to go"/>
+TO: <input type="text" name="to"/> (Actual name or address)
+<input type="submit" name="submit3" value="Tell me how to go"/>
 </form>
 
+<br><hr><br>
+
 <?php
-if(isset($_POST['location'])){
+
+if(isset($_POST['submit'])){
+	$url = "https://data.dublinked.ie/cgi-bin/rtpi/realtimebusinformation?stopid=".$_POST['from'];
+	$json = file_get_contents($url);
+	extract(json_decode($json, true));
+	if($numberofresults<1){
+		echo "unlucky you";
+	}
+	else{
+		for ($i = 0; $i<$numberofresults; $i++){
+			if($results[$i]['route']==$_POST['route']){
+				echo "coming in ".$results[$i]['duetime']." minutes <br>";
+			}
+		}
+	}
+}
+
+
+
+
+
+
+
+
+
+
+if(isset($_POST['submit2'])){
 	$url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=".urlencode($_POST['location'])."&radius=500&type=bus_station&key=AIzaSyAXSAx-O4DR1h9GwcKCBW-9BcQF7UGvno8";
 	$json = json_decode(file_get_contents($url),true);
-	for($i=count($json['results']); $i>0; $i--){
+	$count = count($json['results']);
+	for($i=0; $i<$count; $i++){
 		echo $json['results'][$i-1]['name'], "<br>";
 	}
 }
@@ -51,7 +91,7 @@ if(isset($_POST['location'])){
 
 
 
-if(isset($_POST['from'])){
+if(isset($_POST['submit3'])){
 	
 	//BELOW: make array of, print all stations near current location
 	
@@ -61,9 +101,10 @@ if(isset($_POST['from'])){
 		$from_coordinates = $from_json['results'][0]['geometry']['location']['lat'].",".$from_json['results'][0]['geometry']['location']['lng'];
 		$from_coordinates_url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=".urlencode($from_coordinates)."&radius=500&type=bus_station&key=AIzaSyAXSAx-O4DR1h9GwcKCBW-9BcQF7UGvno8";
 		$from_coordinates_json = json_decode(file_get_contents($from_coordinates_url),true);
-		echo "<b>Bus stations in the range of 500m are:</b> (Farthest to nearest) <br>";
+		echo "<b>Bus stations in the range of 500m are:</b>  <br>";
 		$from_stations = array();
-		for($i=count($from_coordinates_json['results']); $i>0; $i--){
+		$count = count($from_coordinates_json['results']);
+		for($i=0; $i<$count; $i++){
 			$from_stations[$i-1] = $from_coordinates_json['results'][$i-1]['name'];
 			echo $from_stations[$i-1], "<br>";
 		}
@@ -85,7 +126,7 @@ if(isset($_POST['from'])){
 		$to_coordinates = $to_json['results'][0]['geometry']['location']['lat'].",".$to_json['results'][0]['geometry']['location']['lng'];
 		$to_coordinates_url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=".urlencode($to_coordinates)."&radius=500&type=bus_station&key=AIzaSyAXSAx-O4DR1h9GwcKCBW-9BcQF7UGvno8";
 		$to_coordinates_json = json_decode(file_get_contents($to_coordinates_url),true);
-		echo "<br><b>Bus stations in the range of 500m of destination are:</b> (Farthest to nearest) <br>";
+		echo "<br><b>Bus stations in the range of 500m of destination are:</b>  <br>";
 		$to_stations = array();
 		for($i=count($to_coordinates_json['results']); $i>0; $i--){
 			$to_stations[$i-1] = $to_coordinates_json['results'][$i-1]['name'];
